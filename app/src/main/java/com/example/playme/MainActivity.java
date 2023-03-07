@@ -1,10 +1,13 @@
 package com.example.playme;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -20,43 +23,52 @@ import java.util.ArrayList;
 //import com.example.playme.Manifest.*;
 public class MainActivity extends AppCompatActivity {
     private ListView listView;
+
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        listView=findViewById(R.id.list1);
-    0    Dexter.withContext(this)
-                .withPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-                .withListener(new PermissionListener() {
-                    @Override
-                    public void onPermissionGranted(PermissionGrantedResponse permissionGrantedResponse) {
-                        ArrayList<File> mySongs = fetchSongs(Environment.getExternalStorageDirectory());
-                        String items[] = new String[mySongs.size()];
-                        for(int i=0;i<mySongs.size();i++){
-                            items[i]=mySongs.get(i).getName().replace(".mp3","");
+        listView = findViewById(R.id.myList);
+        try {
+            Dexter.withContext(this)
+                    .withPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                    .withListener(new PermissionListener() {
+
+                        @Override
+                        public void onPermissionGranted(PermissionGrantedResponse permissionGrantedResponse) {
+                            ArrayList<File> mySongs = fetchSongs(Environment.getExternalStorageDirectory());
+                            String items[] = new String[mySongs.size()];
+                            for (int i = 0; i < mySongs.size(); i++) {
+                                items[i] = mySongs.get(i).getName().replace(".mp3", "");
+                            }
+                            Log.d("Error ", items.toString());
+                            ArrayAdapter ad = new ArrayAdapter(MainActivity.this, android.R.layout.simple_list_item_1, items);
+                            listView.setAdapter(ad);
+                            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
+                                    Intent intent = new Intent(MainActivity.this, MainActivity2.class);
+                                    String currentSong = listView.getItemAtPosition(pos).toString();
+                                    intent.putExtra("mySongs", mySongs);
+                                    intent.putExtra("currentSong", currentSong);
+                                    intent.putExtra("position", pos);
+                                    startActivity(intent);
+                                }
+                            });
                         }
 
-                        ArrayAdapter ad =  new ArrayAdapter(MainActivity.this, android.R.layout.simple_list_item_1,items);
-                        listView.setAdapter(ad);
-                        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                            @Override
-                            public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
-                                Intent intent = new Intent(MainActivity.this,MainActivity2.class);
-                                String currentSong = listView.getItemAtPosition(pos).toString();
-                                intent.putExtra("mySongs",mySongs);
-                                intent.putExtra("currentSong",currentSong);
-                                intent.putExtra("position",pos);
-                                startActivity(intent);
-                            }
-                        });
-                    }
-                    @Override
-                    public void onPermissionDenied(PermissionDeniedResponse permissionDeniedResponse) {}
-                    @Override
-                    public void onPermissionRationaleShouldBeShown(PermissionRequest permissionRequest, PermissionToken permissionToken) {}
-                }).check();
+                        @Override
+                        public void onPermissionDenied(PermissionDeniedResponse permissionDeniedResponse) {
+                        }
 
+                        @Override
+                        public void onPermissionRationaleShouldBeShown(PermissionRequest permissionRequest, PermissionToken permissionToken) {
+                        }
+                    }).check();
+        }catch(Exception e){
+            Log.d("Error ", e.toString());
+        }
     }
 
     // Adding To ArrayList
